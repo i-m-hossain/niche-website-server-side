@@ -17,12 +17,41 @@ async function run() {
 
         console.log('database created');
 
-        app.post('/users', async(req,res)=>{
+        //add user 
+        app.post('/users', async (req, res) => {
             const user = req.body;
             const result = await usersCollection.insertOne(user);
             res.json(result)
         })
+
+        //check user as admin
+        app.get('/users/admin', async(req, res)=>{
+            const email = req.query.email;
+            const query = {email: email}
+            const user = await usersCollection.findOne(query);
+            let isAdmin = false;
+            if(user.role === 'admin'){
+                isAdmin = true
+            }
+            res.json({admin: isAdmin})
+        })
+
+        //make admin
+        app.put('/users/admin', async (req, res) => {
+            const email = req.body.email;
+            console.log(email);
+            const filter = {email: email}
+            const updateDoc = {
+                $set: {
+                    role: 'admin'
+                },
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.json(result)
+        })
        
+
+
     } finally {
         // await client.close();
     }
