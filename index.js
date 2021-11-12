@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 require('dotenv').config()
+const ObjectId = require('mongodb').ObjectId;
 const { MongoClient } = require('mongodb');
 const port = process.env.PORT || 5000
 
@@ -14,43 +15,134 @@ async function run() {
         await client.connect();
         const database = client.db("nokshi");
         const usersCollection = database.collection("users");
+        const productsCollection = database.collection("products");
+        const ordersCollection = database.collection("orders");
+        const reviewsCollection = database.collection("reviews");
 
         console.log('database created');
 
+        /* ------------------users section----------------------- */
         //add user 
         app.post('/users', async (req, res) => {
             const user = req.body;
             const result = await usersCollection.insertOne(user);
             res.json(result)
         })
-
-        //check user as admin
-        app.get('/users/admin', async(req, res)=>{
-            const email = req.query.email;
-            const query = {email: email}
-            const user = await usersCollection.findOne(query);
-            let isAdmin = false;
-            if(user.role === 'admin'){
-                isAdmin = true
-            }
-            res.json({admin: isAdmin})
+        //get all users
+        app.get('/users', async (req, res) => {
+            const query = {}
+            const cursor = usersCollection.find(query)
+            const users = await cursor.toArray()
+            res.json(users)
         })
-
-        //make admin
-        app.put('/users/admin', async (req, res) => {
-            const email = req.body.email;
-            console.log(email);
-            const filter = {email: email}
+        //delete user
+        app.delete('/users/:id', async (req, res) => {
+            const userId = req.params.id
+            const query = { _id: ObjectId(userId) };
+            const result = await usersCollection.deleteOne(query);
+            res.json(result)
+        })
+        // update user role
+        app.put('/users', async (req, res) => {
+            const user = req.body
+            console.log(user);
+            const filter = { email: user.email }
             const updateDoc = {
                 $set: {
-                    role: 'admin'
+                    role: user.role === 'admin' ? 'user' : 'admin'
                 },
             };
             const result = await usersCollection.updateOne(filter, updateDoc);
             res.json(result)
         })
-       
 
+        //check user as admin
+        app.get('/users/role', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const user = await usersCollection.findOne(query);
+            if (user?.role == 'admin') {
+                res.json({ role: 'admin' })
+            } else {
+                res.json({ role: 'user' })
+            }
+
+
+        })
+
+        //make admin
+        app.put('/users/admin', async (req, res) => {
+            const user = req.body
+            console.log(user.email);
+            const filter = { email: user.email }
+            const updateDoc = {
+                $set: {
+                    role: user.role
+                },
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.json(result)
+        })
+
+        /* ----------------- products section---------------------*/
+
+        // add service
+        app.post('/products', async (req, res) => {
+            const newProduct = req.body;
+            const result = await productsCollection.insertOne(newProduct);
+            res.json(result)
+        })
+        // get all services
+        app.get('/products', async (req, res) => {
+            const query = {}
+            const cursor = productsCollection.find(query)
+            const products = await cursor.toArray()
+            res.json(products)
+        })
+        //delete service
+        app.delete('/products/:id', async (req, res) => {
+            const productId = req.params.id
+            const query = { _id: ObjectId(productId) };
+            const result = await productsCollection.deleteOne(query);
+            res.json(result)
+        })
+
+        /* ------------------------ orders  ------------------------ */
+        // add service
+        app.post('/orders', async (req, res) => {
+            const newOrder = req.body;
+            const result = await ordersCollection.insertOne(newOrder);
+            res.json(result)
+        })
+        // get all services
+        app.get('/orders', async (req, res) => {
+            const query = {}
+            const cursor = ordersCollection.find(query)
+            const orders = await cursor.toArray()
+            res.json(orders)
+        })
+        //delete service
+        app.delete('/orders/:id', async (req, res) => {
+            const orderId = req.params.id
+            const query = { _id: ObjectId(orderId) };
+            const result = await ordersCollection.deleteOne(query);
+            res.json(result)
+        })
+
+        /* ------------------------ reviews  ------------------------ */
+        // add service
+        app.post('/reviews', async (req, res) => {
+            const newReview = req.body;
+            const result = await reviewsCollection.insertOne(newReview);
+            res.json(result)
+        })
+        // get all services
+        app.get('/reviews', async (req, res) => {
+            const query = {}
+            const cursor = reviewsCollection.find(query)
+            const reviews = await cursor.toArray()
+            res.json(reviews)
+        })
 
     } finally {
         // await client.close();
