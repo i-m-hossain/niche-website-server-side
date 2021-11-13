@@ -86,20 +86,27 @@ async function run() {
 
         /* ----------------- products section---------------------*/
 
-        // add service
+        // add product
         app.post('/products', async (req, res) => {
             const newProduct = req.body;
             const result = await productsCollection.insertOne(newProduct);
             res.json(result)
         })
-        // get all services
+        // get all product
         app.get('/products', async (req, res) => {
             const query = {}
             const cursor = productsCollection.find(query)
             const products = await cursor.toArray()
             res.json(products)
         })
-        //delete service
+        // get signle product
+        app.get('/products/:id', async (req, res) => {
+            const productId = req.params.id;
+            const query = { _id: ObjectId(productId)}
+            const product = await productsCollection.findOne(query);
+            res.json(product)
+        })
+        //delete product
         app.delete('/products/:id', async (req, res) => {
             const productId = req.params.id
             const query = { _id: ObjectId(productId) };
@@ -108,20 +115,24 @@ async function run() {
         })
 
         /* ------------------------ orders  ------------------------ */
-        // add service
+        // add order
         app.post('/orders', async (req, res) => {
             const newOrder = req.body;
             const result = await ordersCollection.insertOne(newOrder);
             res.json(result)
         })
-        // get all services
+        // get all order
         app.get('/orders', async (req, res) => {
-            const query = {}
+            const email = req.query.email
+            let query = {}
+            if(email){
+                query = { email, email}
+            }
             const cursor = ordersCollection.find(query)
             const orders = await cursor.toArray()
             res.json(orders)
         })
-        //delete service
+        //delete order
         app.delete('/orders/:id', async (req, res) => {
             const orderId = req.params.id
             const query = { _id: ObjectId(orderId) };
@@ -130,19 +141,20 @@ async function run() {
         })
 
         /* ------------------------ reviews  ------------------------ */
-        // add service
+        // add reviews
         app.post('/reviews', async (req, res) => {
             const newReview = req.body;
             const result = await reviewsCollection.insertOne(newReview);
             res.json(result)
         })
-        // get all services
+        // get all reviews
         app.get('/reviews', async (req, res) => {
             const query = {}
             const cursor = reviewsCollection.find(query)
             const reviews = await cursor.toArray()
             res.json(reviews)
         })
+       
 
     } finally {
         // await client.close();
