@@ -18,6 +18,7 @@ async function run() {
         const productsCollection = database.collection("products");
         const ordersCollection = database.collection("orders");
         const reviewsCollection = database.collection("reviews");
+        const contactsCollection = database.collection("contacts");
 
         console.log('database created');
 
@@ -102,7 +103,7 @@ async function run() {
         // get signle product
         app.get('/products/:id', async (req, res) => {
             const productId = req.params.id;
-            const query = { _id: ObjectId(productId)}
+            const query = { _id: ObjectId(productId) }
             const product = await productsCollection.findOne(query);
             res.json(product)
         })
@@ -125,8 +126,8 @@ async function run() {
         app.get('/orders', async (req, res) => {
             const email = req.query.email
             let query = {}
-            if(email){
-                query = { email, email}
+            if (email) {
+                query = { email, email }
             }
             const cursor = ordersCollection.find(query)
             const orders = await cursor.toArray()
@@ -154,7 +155,13 @@ async function run() {
             const reviews = await cursor.toArray()
             res.json(reviews)
         })
-       
+        /* ----------------------contact data------------------------- */
+        app.post('/contactUs', async (req, res) => {
+            const newContact = req.body;
+            const result = await contactsCollection.insertOne(newContact);
+            res.json(result)
+        })
+
 
     } finally {
         // await client.close();
