@@ -133,6 +133,18 @@ async function run() {
             const orders = await cursor.toArray()
             res.json(orders)
         })
+        app.put('/orders/:id', async (req, res) => {
+            const orderId = req.params.id
+            const status = req.body.status
+            const filter = { _id: ObjectId(orderId) }
+            const updateDoc = {
+                $set: {
+                    status: status
+                },
+            };
+            const result = await ordersCollection.updateOne(filter, updateDoc);
+            res.json(result)
+        })
         //delete order
         app.delete('/orders/:id', async (req, res) => {
             const orderId = req.params.id
