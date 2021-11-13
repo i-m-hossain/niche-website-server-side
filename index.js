@@ -4,11 +4,34 @@ const cors = require('cors')
 require('dotenv').config()
 const ObjectId = require('mongodb').ObjectId;
 const { MongoClient } = require('mongodb');
+const admin = require("firebase-admin");
 const port = process.env.PORT || 5000
 
+var serviceAccount = require('./nokshi-49670-firebase-adminsdk.json');
+
+
+//admin jwt firebase sdk
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 // connect to mongodb
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.krune.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+async function verifyToken(req, res, next) {
+    if (req.headers?.authorization?.startsWith('Bearer')) {
+        const token = req.headers.authorization.split(' ')[1]
+        console.log(token);
+        try {
+            const decodedUser = await admin.auth().verifyIdToken(token)
+            req.decodedEmail = decodedUser.email
+        } catch {
+
+        }
+    }
+    next()
+}
+
 
 async function run() {
     try {
@@ -44,17 +67,27 @@ async function run() {
             res.json(result)
         })
         // update user role
-        app.put('/users', async (req, res) => {
+        app.put('/users', verifyToken, async (req, res) => {
             const user = req.body
-            console.log(user);
-            const filter = { email: user.email }
-            const updateDoc = {
-                $set: {
-                    role: user.role === 'admin' ? 'user' : 'admin'
-                },
-            };
-            const result = await usersCollection.updateOne(filter, updateDoc);
-            res.json(result)
+            const requester = req.decodedEmail
+            if (requester) {
+                const query = { email: requester }
+                const requesterAccount = await usersCollection.findOne(query)
+                if (requesterAccount.role === 'admin'){
+                    console.log(user);
+                    const filter = { email: user.email }
+                    const updateDoc = {
+                        $set: {
+                            role: user.role === 'admin' ? 'user' : 'admin'
+                        },
+                    };
+                    const result = await usersCollection.updateOne(filter, updateDoc);
+                    res.json(result)
+                }
+            } else {
+                res.status(403).json({ message: "you don't have access to make admin" })
+            }
+            
         })
 
         //check user as admin
@@ -72,17 +105,28 @@ async function run() {
         })
 
         //make admin
-        app.put('/users/admin', async (req, res) => {
+        app.put('/users/admin', verifyToken, async (req, res) => {
             const user = req.body
             console.log(user.email);
-            const filter = { email: user.email }
-            const updateDoc = {
-                $set: {
-                    role: user.role
-                },
-            };
-            const result = await usersCollection.updateOne(filter, updateDoc);
-            res.json(result)
+            const requester = req.decodedEmail
+            if (requester) {
+                const query = { email: requester }
+                const requesterAccount = await usersCollection.findOne(query)
+                if (requesterAccount.role === 'admin') {
+                    const filter = { email: user.email }
+                    const updateDoc = {
+                        $set: {
+                            role: user.role
+                        },
+                    };
+                    const result = await usersCollection.updateOne(filter, updateDoc);
+                    res.json(result)
+                }
+
+            } else {
+                res.status(403).json({ message: "you don't have access to make admin" })
+            }
+
         })
 
         /* ----------------- products section---------------------*/
