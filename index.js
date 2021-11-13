@@ -7,7 +7,7 @@ const { MongoClient } = require('mongodb');
 const admin = require("firebase-admin");
 const port = process.env.PORT || 5000
 
-var serviceAccount = require('./nokshi-49670-firebase-adminsdk.json');
+var serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 
 //admin jwt firebase sdk
@@ -73,7 +73,7 @@ async function run() {
             if (requester) {
                 const query = { email: requester }
                 const requesterAccount = await usersCollection.findOne(query)
-                if (requesterAccount.role === 'admin'){
+                if (requesterAccount.role === 'admin') {
                     console.log(user);
                     const filter = { email: user.email }
                     const updateDoc = {
@@ -87,7 +87,7 @@ async function run() {
             } else {
                 res.status(403).json({ message: "you don't have access to make admin" })
             }
-            
+
         })
 
         //check user as admin
