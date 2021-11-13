@@ -5,12 +5,10 @@ require('dotenv').config()
 const ObjectId = require('mongodb').ObjectId;
 const { MongoClient } = require('mongodb');
 const admin = require("firebase-admin");
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 5000;
 
 var serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
-
-//admin jwt firebase sdk
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
